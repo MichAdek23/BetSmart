@@ -1,12 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, User, Bell, ChevronDown } from 'lucide-react';
+import { Menu, X, User, Bell, ChevronDown, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(true); // In a real app, this would come from auth
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,13 +80,68 @@ const Navbar = () => {
         </nav>
 
         <div className="hidden md:flex items-center space-x-4">
-          <button className="relative rounded-full w-9 h-9 flex items-center justify-center hover:bg-accent transition-colors">
-            <Bell className="h-5 w-5 text-foreground/70" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
-          </button>
-          <button className="rounded-full w-9 h-9 flex items-center justify-center hover:bg-accent transition-colors">
-            <User className="h-5 w-5 text-foreground/70" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative rounded-full w-9 h-9 flex items-center justify-center hover:bg-accent transition-colors">
+                <Bell className="h-5 w-5 text-foreground/70" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                New event: Liverpool vs Man City
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                Your bet on Lakers vs Celtics was won!
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                New promotion: 50% bonus on next deposit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="justify-center font-medium text-primary">
+                View all notifications
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-full w-9 h-9 flex items-center justify-center hover:bg-accent transition-colors">
+                <User className="h-5 w-5 text-foreground/70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/account">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/account/bets">My Bets</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/account/wallet">Wallet</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {isAdmin && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem>
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <button className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-md transition-colors">
             Place Bet
           </button>
@@ -125,6 +189,15 @@ const Navbar = () => {
           >
             My Account
           </Link>
+          {isAdmin && (
+            <Link 
+              to="/admin" 
+              className="block py-3 text-lg font-medium border-b border-border"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Admin Dashboard
+            </Link>
+          )}
           <div className="pt-4">
             <button className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-md transition-colors">
               Place Bet
