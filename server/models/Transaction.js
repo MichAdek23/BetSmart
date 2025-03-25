@@ -9,7 +9,7 @@ const TransactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['deposit', 'withdrawal', 'bet_placed', 'bet_won', 'bet_lost', 'cashout', 'bonus'],
+    enum: ['deposit', 'withdrawal', 'bet_placed', 'bet_won', 'bet_lost', 'cashout', 'bonus', 'promotion', 'referral', 'fee'],
     required: true
   },
   amount: {
@@ -22,7 +22,7 @@ const TransactionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'completed', 'failed', 'cancelled'],
+    enum: ['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded'],
     default: 'pending'
   },
   reference: {
@@ -35,6 +35,19 @@ const TransactionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Bet'
   },
+  paymentMethod: {
+    type: String,
+    enum: ['credit_card', 'debit_card', 'bank_transfer', 'e_wallet', 'crypto', 'cash', null],
+    default: null
+  },
+  paymentDetails: {
+    type: Object,
+    default: {}
+  },
+  metadata: {
+    type: Object,
+    default: {}
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -42,5 +55,9 @@ const TransactionSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Add index for query performance
+TransactionSchema.index({ user: 1, createdAt: -1 });
+TransactionSchema.index({ type: 1, status: 1 });
 
 module.exports = mongoose.model('Transaction', TransactionSchema);

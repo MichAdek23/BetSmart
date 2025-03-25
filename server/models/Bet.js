@@ -31,24 +31,49 @@ const BetSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'won', 'lost', 'canceled', 'cashout'],
+    enum: ['pending', 'won', 'lost', 'canceled', 'cashout', 'partial_cashout', 'void'],
     default: 'pending'
   },
   result: {
     type: String,
-    enum: ['win', 'loss', 'void', null],
+    enum: ['win', 'loss', 'void', 'push', null],
     default: null
   },
   settledAmount: {
     type: Number,
     default: 0
   },
+  betType: {
+    type: String,
+    enum: ['single', 'parlay', 'system', 'teaser', 'if_bet', 'live', 'prop'],
+    default: 'single'
+  },
+  isLiveBet: {
+    type: Boolean,
+    default: false
+  },
+  cashoutAvailable: {
+    type: Boolean,
+    default: false
+  },
+  cashoutValue: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  settledAt: {
+    type: Date
   }
 }, {
   timestamps: true
 });
+
+// Add indexing for better performance
+BetSchema.index({ user: 1, createdAt: -1 });
+BetSchema.index({ event: 1, status: 1 });
+BetSchema.index({ status: 1, isLiveBet: 1 });
 
 module.exports = mongoose.model('Bet', BetSchema);
