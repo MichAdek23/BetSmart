@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 import { toast } from 'sonner';
-import authService from './authService';
+import authServiceInstance from './authService';
 
 // Create an axios instance
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -14,7 +14,7 @@ const api = axios.create({
 // Add a request interceptor to include the token in requests
 api.interceptors.request.use(
   (config) => {
-    const token = authService.getToken();
+    const token = authServiceInstance.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,7 +29,7 @@ api.interceptors.response.use(
   (error) => {
     // Handle token expiration
     if (error.response?.status === 401) {
-      authService.removeToken();
+      authServiceInstance.removeToken();
       window.location.href = '/login';
       toast.error('Your session has expired. Please login again.');
     } else {
