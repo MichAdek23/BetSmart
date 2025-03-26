@@ -11,6 +11,8 @@ const compression = require('compression');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const logger = require('./utils/logger');
+const { errorHandler } = require('./middleware/error');
 
 // Load env variables
 dotenv.config();
@@ -32,8 +34,8 @@ app.use(helmet()); // Set security HTTP headers
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
-  max: process.env.RATE_LIMIT_MAX || 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many requests from this IP, please try again later'
@@ -75,6 +77,12 @@ app.use(cors({
   credentials: true
 }));
 
+// Request logger middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.originalUrl} - ${req.ip}`);
+  next();
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -90,47 +98,35 @@ if (NODE_ENV === 'production') {
   });
 }
 
+// Error handler middleware
+app.use(errorHandler);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/betsmart')
   .then(() => {
-    console.log('Connected to MongoDB');
+    logger.info('Connected to MongoDB');
     // Start server after DB connection
     app.listen(PORT, () => {
-      console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
+      logger.info(`Server running in ${NODE_ENV} mode on port ${PORT}`);
     });
   })
   .catch(err => {
-    console.error('MongoDB connection error:', err);
+    logger.error(`MongoDB connection error: ${err.message}`);
+    process.exit(1);
   });
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  
-  const statusCode = err.statusCode || 500;
-  
-  res.status(statusCode).json({
-    success: false,
-    message: err.message || 'Server error',
-    error: NODE_ENV === 'development' ? err : undefined,
-    stack: NODE_ENV === 'development' ? err.stack : undefined
-  });
-});
 
 // Handle unhandled rejections
 process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-  console.error(err.name, err.message);
+  logger.error(`UNHANDLED REJECTION! 💥 Shutting down...`);
+  logger.error(`${err.name}: ${err.message}`);
   
-  server.close(() => {
-    process.exit(1);
-  });
+  process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-  console.error(err.name, err.message);
+  logger.error(`UNCAUGHT EXCEPTION! 💥 Shutting down...`);
+  logger.error(`${err.name}: ${err.message}`);
   process.exit(1);
 });
 
